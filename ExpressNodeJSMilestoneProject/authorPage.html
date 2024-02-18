@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authors</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <style>
+    body {
+      background-color: white;
+      color: black;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-top: 20px;
+    }
+
+    .table-container {
+      max-height: 200px;
+      max-width: 900px;
+      color: white;
+      overflow-y: auto;
+      margin-top: 10px;
+      border-color: white;
+      border-width: 2px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 900px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: black;
+    }
+
+    .action-btn {
+      padding: 5px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .update-btn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Navbar</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+        aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- Navbar links -->
+      <div class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+          <!-- Link to Author Page -->
+          <li class="nav-item">
+            <a class="nav-link" href="/authorPage">Authors</a>
+          </li>
+          <!-- Link to Book Page -->
+          <li class="nav-item">
+            <a class="nav-link" href="/bookPage">Books</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/creationPage">Create</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Authors</h1>
+        <div class="table-container">
+          <table id="authors-table" class="table table-dark">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="authors-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    function createAuthorRow(author) {
+      const row = document.createElement('tr');
+      row.id = `author-row-${author.authorId}`;
+      row.innerHTML = `<td>${author.authorId}</td><td>${author.name}</td><td><button class="action-btn update-btn" onclick="updateAuthor(${author.authorId})">Update</button><button class="action-btn delete-btn" onclick="deleteAuthor(${author.authorId})">Delete</button><button class="action-btn save-btn" onclick="saveAuthor(${author.authorId})" style="display: none;">Save</button></td>`;
+      return row;
+    }
+    function refreshAuthorsTable() {
+      fetch('/authors').then(response => response.json()).then(authors => {
+        const authorsTableBody = document.getElementById('authors-table-body');
+        authorsTableBody.innerHTML = '';
+        authors.forEach(author => {
+          const row = createAuthorRow(author);
+          authorsTableBody.appendChild(row);
+        });
+      }).catch(error => console.error('Error fetching authors:', error));
+    }
+    function updateAuthor(authorId) {
+      const authorRow = document.querySelector(`#authors-table-body #author-row-${authorId}`);
+      const name = authorRow.cells[1].textContent;
+      const editableRow = document.createElement('tr');
+      editableRow.id = `author-row-${authorId}`;
+      editableRow.innerHTML = `<td>${authorId}</td><td><input type="text" id="name-${authorId}" value="${name}"></td><td><button class="action-btn save-btn" onclick="saveAuthor(${authorId})">Save</button></td>`;
+      authorRow.parentNode.replaceChild(editableRow, authorRow);
+    }
+    function saveAuthor(authorId) {
+      const name = document.getElementById(`name-${authorId}`).value;
+      fetch(`/authors/${authorId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).then(response => {
+        if (response.ok) {
+          console.log('Author updated successfully');
+          refreshAuthorsTable();
+          alert('Author updated successfully');
+        } else {
+          throw new Error('Failed to update author');
+        }
+      }).catch(error => console.error('Error updating author:', error));
+    }
+    function deleteAuthor(authorId) {
+      fetch(`/authors/${authorId}`, { method: 'DELETE' }).then(response => {
+        if (response.ok) {
+          console.log('Author deleted successfully');
+          refreshAuthorsTable();
+          alert('Author deleted successfully');
+        } else {
+          throw new Error('Failed to delete author');
+        }
+      }).catch(error => console.error('Error deleting author:', error));
+    }
+    refreshAuthorsTable();
+  </script>
+</body>
+
+</html>

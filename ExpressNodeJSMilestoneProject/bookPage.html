@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Books</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <style>
+    body {
+      background-color: white;
+      color: black;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-top: 20px;
+    }
+
+    .table-container {
+      max-height: 200px;
+      max-width: 900px;
+      color: white;
+      overflow-y: auto;
+      margin-top: 10px;
+      border-color: white;
+      border-width: 2px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 900px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: black;
+    }
+
+    .action-btn {
+      padding: 5px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .update-btn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/">Navbar</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <!-- Navbar links -->
+          <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+                <!-- Link to Author Page -->
+                <li class="nav-item">
+                  <a class="nav-link" href="/authorPage">Authors</a>
+                </li>
+                <!-- Link to Book Page -->
+                <li class="nav-item">
+                  <a class="nav-link" href="/bookPage">Books</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/creationPage">Create</a>
+                  </li>
+              </ul>
+          </div>
+        </div>
+      </nav>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Books</h1>
+        <div class="table-container">
+          <table id="books-table" class="table table-dark">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author ID</th>
+                <th>Publication Year</th>
+                <th>Genre</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="books-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    function createBookRow(book) {
+      const row = document.createElement('tr');
+      row.id = `book-row-${book.bookId}`;
+      row.innerHTML = `<td>${book.bookId}</td><td>${book.title}</td><td>${book.authorId}</td><td>${book.publicationYear}</td><td>${book.genre}</td><td><button class="action-btn update-btn" onclick="updateBook(${book.bookId})">Update</button><button class="action-btn delete-btn" onclick="deleteBook(${book.bookId})">Delete</button><button class="action-btn save-btn" onclick="saveBook(${book.bookId})" style="display: none;">Save</button></td>`;
+      return row;
+    }
+    function refreshBooksTable() {
+      fetch('/books').then(response => response.json()).then(books => {
+        const booksTableBody = document.getElementById('books-table-body');
+        booksTableBody.innerHTML = '';
+        books.forEach(book => {
+          const row = createBookRow(book);
+          booksTableBody.appendChild(row);
+        });
+      }).catch(error => console.error('Error fetching books:', error));
+    }
+    function updateBook(bookId) {
+      const bookRow = document.querySelector(`#books-table-body #book-row-${bookId}`);
+      const title = bookRow.cells[1].textContent;
+      const authorId = bookRow.cells[2].textContent;
+      const publicationYear = bookRow.cells[3].textContent;
+      const genre = bookRow.cells[4].textContent;
+      const editableRow = document.createElement('tr');
+      editableRow.id = `book-row-${bookId}`;
+      editableRow.innerHTML = `<td>${bookId}</td><td><input type="text" id="title-${bookId}" value="${title}"></td><td><input type="text" id="authorId-${bookId}" value="${authorId}"></td><td><input type="text" id="publicationYear-${bookId}" value="${publicationYear}"></td><td><input type="text" id="genre-${bookId}" value="${genre}"></td><td><button class="action-btn save-btn" onclick="saveBook(${bookId})">Save</button></td>`;
+      bookRow.parentNode.replaceChild(editableRow, bookRow);
+    }
+    function saveBook(bookId) {
+      const title = document.getElementById(`title-${bookId}`).value;
+      const authorId = document.getElementById(`authorId-${bookId}`).value;
+      const publicationYear = document.getElementById(`publicationYear-${bookId}`).value;
+      const genre = document.getElementById(`genre-${bookId}`).value;
+      fetch(`/books/${bookId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, authorId, publicationYear, genre }) }).then(response => {
+        if (response.ok) {
+          console.log('Book updated successfully');
+          refreshBooksTable();
+          alert('Book updated successfully');
+        } else {
+          throw new Error('Failed to update book');
+        }
+      }).catch(error => console.error('Error updating book:', error));
+    }
+    function deleteBook(bookId) {
+      fetch(`/books/${bookId}`, { method: 'DELETE' }).then(response => {
+        if (response.ok) {
+          console.log('Book deleted successfully');
+          refreshBooksTable();
+          alert('Book deleted successfully');
+        } else {
+          throw new Error('Failed to delete book');
+        }
+      }).catch(error => console.error('Error deleting book:', error));
+    }
+    refreshBooksTable();
+  </script>
+</body>
+
+</html>
